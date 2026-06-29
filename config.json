@@ -1,0 +1,12 @@
+{
+  "UrlSunat": "https://e-consultaruc.sunat.gob.pe/cl-ti-itmrconsruc/FrameCriterioBusquedaWeb.jsp",
+
+  "SelectoresSunat": {
+    "botonPorRuc": "#btnPorRuc",
+    "inputBusqueda": "#txtRuc",
+    "botonBuscar": "#btnAceptar",
+    "tablaResultados": "#divResultado table tbody tr",
+    "mensajeSinResultados": "#divResultado:has-text('No se encontraron')",
+    "framePrincipal": ""
+  }
+}

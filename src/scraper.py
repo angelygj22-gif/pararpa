@@ -60,8 +60,18 @@ def _mapear_datos(datos: dict, ruc_original: str) -> dict:
     return {
         "ruc": ruc_num,
         "razon_social": razon_social,
+        "tipo_contribuyente": datos.get("Tipo Contribuyente", ""),
+        "nombre_comercial": datos.get("Nombre Comercial", ""),
+        "fecha_inscripcion": datos.get("Fecha de Inscripción", ""),
+        "fecha_inicio_actividades": datos.get("Fecha de Inicio de Actividades", ""),
         "estado": datos.get("Estado del Contribuyente", ""),
         "condicion": datos.get("Condición del Contribuyente", ""),
+        "domicilio_fiscal": datos.get("Domicilio Fiscal", ""),
+        "sistema_emision": datos.get("Sistema Emisión de Comprobante", ""),
+        "actividad_comercio_exterior": datos.get("Actividad Comercio Exterior", ""),
+        "sistema_contabilidad": datos.get("Sistema Contabilidad", ""),
+        "emisor_electronico_desde": datos.get("Emisor electrónico desde", ""),
+        "actividades_economicas": datos.get("Actividades Económicas", []),
         "status": "Exitoso",
     }
 
@@ -70,7 +80,17 @@ def _respuesta_error(ruc: str, motivo: str) -> dict:
     return {
         "ruc": ruc,
         "razon_social": "",
+        "tipo_contribuyente": "",
+        "nombre_comercial": "",
+        "fecha_inscripcion": "",
+        "fecha_inicio_actividades": "",
         "estado": motivo,
         "condicion": "",
+        "domicilio_fiscal": "",
+        "sistema_emision": "",
+        "actividad_comercio_exterior": "",
+        "sistema_contabilidad": "",
+        "emisor_electronico_desde": "",
+        "actividades_economicas": [],
         "status": "Error",
     }

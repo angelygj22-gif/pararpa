@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from playwright.async_api import async_playwright
 
 from src.scraper import consultar_ruc
+from src.schemas import respuesta_vacia
 
 app = FastAPI(title="Consulta RUC SUNAT API")
 
@@ -47,17 +48,10 @@ async def shutdown():
 
 @app.post("/consultar")
 async def consultar(data: ConsultaRequest):
-    ruc = data.ruc.strip()
+    ruc = data.ruc.strip() if data.ruc else ""
 
     if not ruc:
-        return {
-            "ruc": "",
-            "razon_social": "",
-            "estado": "NO EXISTE",
-            "condicion": "",
-            "detalle": "RUC vacío en la solicitud",
-            "status": "Error",
-        }
+        return respuesta_vacia(detalle="RUC vacío en la solicitud")
 
     resultado = await consultar_ruc(browser, ruc)
 

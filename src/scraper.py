@@ -3,6 +3,7 @@ import traceback
 from playwright.async_api import Browser
 
 from src.extractor_datos import ExtractorDatos
+from src.schemas import respuesta_vacia
 
 URL_SUNAT = "https://e-consultaruc.sunat.gob.pe/cl-ti-itmrconsruc/FrameCriterioBusquedaWeb.jsp"
 
@@ -32,18 +33,13 @@ async def consultar_ruc(browser: Browser, ruc: str) -> dict:
         try:
             await page.wait_for_selector("#divResultado", state="visible", timeout=20000)
         except Exception:
-            url_actual = page.url
-            if "jcrS00Alias" in url_actual:
-                pass
-            else:
-                contenido = await page.content()
-                if "No se encontraron" in contenido:
-                    return _respuesta_error(ruc, "NO EXISTE")
-                pagina = await page.inner_text("body")
-                if ruc in pagina and ("ACTIVO" in pagina or "HABIDO" in pagina):
-                    pass
-                else:
-                    return _respuesta_error(ruc, "NO EXISTE")
+            contenido = await page.content()
+            if "No se encontraron" in contenido:
+                return respuesta_vacia(ruc, "RUC no encontrado en el padrón de SUNAT")
+            pagina = await page.inner_text("body")
+            resultado_ok = ruc in pagina and ("ACTIVO" in pagina or "HABIDO" in pagina)
+            if not resultado_ok:
+                return respuesta_vacia(ruc, "RUC no encontrado en el padrón de SUNAT")
 
         await page.wait_for_timeout(2000)
 
@@ -56,7 +52,7 @@ async def consultar_ruc(browser: Browser, ruc: str) -> dict:
         detalle = f"Error: {type(e).__name__}: {str(e)[:200]}"
         print(detalle)
         traceback.print_exc()
-        return _respuesta_error(ruc, "SUNAT fuera de servicio", detalle)
+        return respuesta_vacia(ruc, detalle, estado="SUNAT fuera de servicio")
 
     finally:
         try:
@@ -92,32 +88,4 @@ def _mapear_datos(datos: dict, ruc_original: str) -> dict:
         "actividades_economicas": datos.get("Actividades Económicas", []),
         "detalle": "Consulta exitosa",
         "status": "Exitoso",
-    }
-
-
-def _respuesta_error(ruc: str, motivo: str, detalle_extra: str = "") -> dict:
-    if motivo == "NO EXISTE":
-        detalle = "RUC no encontrado en el padrón de SUNAT"
-    elif detalle_extra:
-        detalle = detalle_extra
-    else:
-        detalle = "Error al conectar con SUNAT"
-
-    return {
-        "ruc": ruc,
-        "razon_social": "",
-        "tipo_contribuyente": "",
-        "nombre_comercial": "",
-        "fecha_inscripcion": "",
-        "fecha_inicio_actividades": "",
-        "estado": motivo,
-        "condicion": "",
-        "domicilio_fiscal": "",
-        "sistema_emision": "",
-        "actividad_comercio_exterior": "",
-        "sistema_contabilidad": "",
-        "emisor_electronico_desde": "",
-        "actividades_economicas": [],
-        "detalle": detalle,
-        "status": "Error",
     }

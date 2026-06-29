@@ -1,3 +1,5 @@
+import traceback
+
 from playwright.async_api import Browser
 
 from src.extractor_datos import ExtractorDatos
@@ -8,37 +10,42 @@ SELECTOR_POR_RUC = "#btnPorRuc"
 SELECTOR_BUSQUEDA = "#txtRuc"
 SELECTOR_BOTON = "#btnAceptar"
 
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+
 
 async def consultar_ruc(browser: Browser, ruc: str) -> dict:
-    page = await browser.new_page()
+    page = await browser.new_page(user_agent=USER_AGENT)
     try:
-        await page.goto(URL_SUNAT, timeout=30000, wait_until="domcontentloaded")
-        await page.wait_for_timeout(2000)
+        await page.goto(URL_SUNAT, timeout=60000, wait_until="networkidle")
+        await page.wait_for_timeout(3000)
 
-        await page.locator(SELECTOR_POR_RUC).wait_for(state="visible", timeout=10000)
+        await page.locator(SELECTOR_POR_RUC).wait_for(state="visible", timeout=15000)
         await page.locator(SELECTOR_POR_RUC).click()
-        await page.wait_for_timeout(1000)
+        await page.wait_for_timeout(1500)
 
         await page.locator(SELECTOR_BUSQUEDA).clear()
         await page.locator(SELECTOR_BUSQUEDA).fill(ruc)
-        await page.wait_for_timeout(1000)
+        await page.wait_for_timeout(1500)
 
         await page.locator(SELECTOR_BOTON).click()
 
         try:
-            await page.wait_for_url("**/jcrS00Alias*", timeout=15000)
+            await page.wait_for_url("**/jcrS00Alias*", timeout=20000)
         except Exception:
             return _respuesta_error(ruc, "NO EXISTE")
 
-        await page.wait_for_timeout(2000)
+        await page.wait_for_timeout(3000)
 
         html = await page.content()
         datos = ExtractorDatos().extraer(html)
 
         return _mapear_datos(datos, ruc)
 
-    except Exception:
-        return _respuesta_error(ruc, "SUNAT fuera de servicio")
+    except Exception as e:
+        detalle = f"Error: {type(e).__name__}: {str(e)[:200]}"
+        print(detalle)
+        traceback.print_exc()
+        return _respuesta_error(ruc, "SUNAT fuera de servicio", detalle)
 
     finally:
         try:
@@ -77,8 +84,13 @@ def _mapear_datos(datos: dict, ruc_original: str) -> dict:
     }
 
 
-def _respuesta_error(ruc: str, motivo: str) -> dict:
-    detalle = "RUC no encontrado en el padrón de SUNAT" if motivo == "NO EXISTE" else "Error al conectar con SUNAT"
+def _respuesta_error(ruc: str, motivo: str, detalle_extra: str = "") -> dict:
+    if motivo == "NO EXISTE":
+        detalle = "RUC no encontrado en el padrón de SUNAT"
+    elif detalle_extra:
+        detalle = detalle_extra
+    else:
+        detalle = "Error al conectar con SUNAT"
 
     return {
         "ruc": ruc,

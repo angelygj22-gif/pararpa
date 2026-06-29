@@ -30,11 +30,22 @@ async def consultar_ruc(browser: Browser, ruc: str) -> dict:
         await page.locator(SELECTOR_BOTON).click()
 
         try:
-            await page.wait_for_url("**/jcrS00Alias*", timeout=20000)
+            await page.wait_for_selector("#divResultado", state="visible", timeout=20000)
         except Exception:
-            return _respuesta_error(ruc, "NO EXISTE")
+            url_actual = page.url
+            if "jcrS00Alias" in url_actual:
+                pass
+            else:
+                contenido = await page.content()
+                if "No se encontraron" in contenido:
+                    return _respuesta_error(ruc, "NO EXISTE")
+                pagina = await page.inner_text("body")
+                if ruc in pagina and ("ACTIVO" in pagina or "HABIDO" in pagina):
+                    pass
+                else:
+                    return _respuesta_error(ruc, "NO EXISTE")
 
-        await page.wait_for_timeout(3000)
+        await page.wait_for_timeout(2000)
 
         html = await page.content()
         datos = ExtractorDatos().extraer(html)

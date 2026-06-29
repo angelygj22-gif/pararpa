@@ -1,4 +1,4 @@
-from playwright.sync_api import Browser, Page
+from playwright.async_api import Browser
 
 from src.extractor_datos import ExtractorDatos
 
@@ -9,40 +9,40 @@ SELECTOR_BUSQUEDA = "#txtRuc"
 SELECTOR_BOTON = "#btnAceptar"
 
 
-def consultar_ruc(browser: Browser, ruc: str) -> dict:
-    page = browser.new_page()
+async def consultar_ruc(browser: Browser, ruc: str) -> dict:
+    page = await browser.new_page()
     try:
-        page.goto(URL_SUNAT, timeout=30000, wait_until="domcontentloaded")
-        page.wait_for_timeout(2000)
+        await page.goto(URL_SUNAT, timeout=30000, wait_until="domcontentloaded")
+        await page.wait_for_timeout(2000)
 
-        page.locator(SELECTOR_POR_RUC).wait_for(state="visible", timeout=10000)
-        page.locator(SELECTOR_POR_RUC).click()
-        page.wait_for_timeout(1000)
+        await page.locator(SELECTOR_POR_RUC).wait_for(state="visible", timeout=10000)
+        await page.locator(SELECTOR_POR_RUC).click()
+        await page.wait_for_timeout(1000)
 
-        page.locator(SELECTOR_BUSQUEDA).clear()
-        page.locator(SELECTOR_BUSQUEDA).fill(ruc)
-        page.wait_for_timeout(1000)
+        await page.locator(SELECTOR_BUSQUEDA).clear()
+        await page.locator(SELECTOR_BUSQUEDA).fill(ruc)
+        await page.wait_for_timeout(1000)
 
-        page.locator(SELECTOR_BOTON).click()
+        await page.locator(SELECTOR_BOTON).click()
 
         try:
-            page.wait_for_url("**/jcrS00Alias*", timeout=15000)
+            await page.wait_for_url("**/jcrS00Alias*", timeout=15000)
         except Exception:
             return _respuesta_error(ruc, "NO EXISTE")
 
-        page.wait_for_timeout(2000)
+        await page.wait_for_timeout(2000)
 
-        html = page.content()
+        html = await page.content()
         datos = ExtractorDatos().extraer(html)
 
         return _mapear_datos(datos, ruc)
 
-    except Exception as e:
+    except Exception:
         return _respuesta_error(ruc, "SUNAT fuera de servicio")
 
     finally:
         try:
-            page.close()
+            await page.close()
         except Exception:
             pass
 

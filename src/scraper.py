@@ -72,11 +72,14 @@ def _mapear_datos(datos: dict, ruc_original: str) -> dict:
         "sistema_contabilidad": datos.get("Sistema Contabilidad", ""),
         "emisor_electronico_desde": datos.get("Emisor electrónico desde", ""),
         "actividades_economicas": datos.get("Actividades Económicas", []),
+        "detalle": "Consulta exitosa",
         "status": "Exitoso",
     }
 
 
 def _respuesta_error(ruc: str, motivo: str) -> dict:
+    detalle = "RUC no encontrado en el padrón de SUNAT" if motivo == "NO EXISTE" else "Error al conectar con SUNAT"
+
     return {
         "ruc": ruc,
         "razon_social": "",
@@ -92,5 +95,6 @@ def _respuesta_error(ruc: str, motivo: str) -> dict:
         "sistema_contabilidad": "",
         "emisor_electronico_desde": "",
         "actividades_economicas": [],
+        "detalle": detalle,
         "status": "Error",
     }

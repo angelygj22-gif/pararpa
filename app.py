@@ -55,6 +55,7 @@ async def consultar(data: ConsultaRequest):
             "razon_social": "",
             "estado": "NO EXISTE",
             "condicion": "",
+            "detalle": "RUC vacío en la solicitud",
             "status": "Error",
         }
 
